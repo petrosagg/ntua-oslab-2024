@@ -8,6 +8,28 @@
 
 #define HELPER "./a1.1-C"
 
+void explain_wait_status(pid_t pid, int status) {
+  if (WIFEXITED(status))
+    fprintf(stderr,
+            "Child with PID = %ld terminated normally, exit status = %d\n",
+            (long)pid, WEXITSTATUS(status));
+  else if (WIFSIGNALED(status))
+    fprintf(stderr,
+            "Child with PID = %ld was terminated by a signal, signo = %d\n",
+            (long)pid, WTERMSIG(status));
+  else if (WIFSTOPPED(status))
+    fprintf(stderr,
+            "Child with PID = %ld has been stopped by a signal, signo = %d\n",
+            (long)pid, WSTOPSIG(status));
+  else {
+    fprintf(stderr,
+            "%s: Internal error: Unhandled case, PID = %ld, status = %d\n",
+            __func__, (long)pid, status);
+    exit(EXIT_FAILURE);
+  }
+  fflush(stderr);
+}
+
 void main(int argc, char *argv[]) {
   if (argc < 4) {
     printf("Usage: %s INPUT OUTPUT CHAR\nSearches for character CHAR in INPUT "
@@ -58,14 +80,14 @@ void main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
   } else {
     // Wait for the child to exit
-    int wstatus;
+    int status;
 
-    int ret = waitpid(child_pid, &wstatus, 0);
+    int ret = waitpid(child_pid, &status, 0);
     if (ret == -1) {
       perror("waitpid");
       exit(EXIT_FAILURE);
     }
-    printf("Child exited with status=%d\n", WEXITSTATUS(wstatus));
+    explain_wait_status(child_pid, status);
 
     if (close(input_fd) == -1) {
       perror("Could not close input file");
