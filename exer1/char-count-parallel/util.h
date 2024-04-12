@@ -49,10 +49,7 @@ struct rsp_info {
 // A command from the frontend to the dispatcher
 struct cmd {
     enum kind tag;
-    union {
-        struct cmd_alter alter;
-        struct cmd_scan scan;
-    };
+    struct cmd_alter alter;
 };
 
 // A response from the dispatcher to the frontend
