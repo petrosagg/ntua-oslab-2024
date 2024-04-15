@@ -89,13 +89,18 @@ int main (int argc, char* argv[]){
                 printf("  dispatcher_pid = %d, num_workers = %ld\n", dispatcher_pid, num_workers);
                 for (size_t i = 0; i < num_workers; i++) {
                     read_exact(dispatcher_rx, &rsp, sizeof(struct rsp));
-                    printf("    worker pid = %d\n", rsp.info.pid);
+                    printf("    worker %d pid = %d\n", i + 1, rsp.info.pid);
                 }
             // Handle "show progress" command
             } else if (strcmp(token, "progress") == 0) {
                 send_cmd_progress(dispatcher_tx);
                 read_exact(dispatcher_rx, &rsp, sizeof(struct rsp));
-                print_response("  progress: ", &rsp);
+                printf(
+                    "total = %ld scanned = %ld count = %ld\n",
+                    rsp.progress.bytes_total,
+                    rsp.progress.bytes_scanned,
+                    rsp.progress.count
+                );
             } else {
                 printf("error: expected token 'info' or 'progress'\n");
             }
