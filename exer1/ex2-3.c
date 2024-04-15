@@ -7,7 +7,6 @@
 #include <string.h>
 
 int main(int argc, char* argv[]){
-    printf("hi\n");
     int fd;
     int status;
     int count = 0;
@@ -15,7 +14,6 @@ int main(int argc, char* argv[]){
     int pfd2[2];
     char buff[1024];
     char buffer[1024];
-    char sc = argv[3][0];
     if (argc < 4) {
         fprintf(stderr, "Insufficient command-line arguments\n");
         exit(1);
@@ -24,11 +22,12 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Expected single character but '%s' was provided\n", argv[3]);
         exit(1);
     }
+    char sc = argv[3][0];
     if (pipe(pfd1) < 0) {
         perror("pipe");
         exit(1);
     }  
-    if (pipe(pfd1) < 0) {
+    if (pipe(pfd2) < 0) {
         perror("pipe");
         exit(1);
     }  
@@ -46,10 +45,8 @@ int main(int argc, char* argv[]){
     }
     if(p!=0){
         close(pfd1[0]);
-        int bytes_read=0;
-        ssize_t rcnt;
         while(1){
-            rcnt = read(fd, buff, sizeof(buff)-1);
+            ssize_t rcnt = read(fd, buff, sizeof(buff));
             if (rcnt == -1){
                 perror("read");
                 return 1;
@@ -57,17 +54,15 @@ int main(int argc, char* argv[]){
             if (rcnt == 0){
                 break;
             }
-            bytes_read+=rcnt;
-            buff[rcnt] = '\0';
 
+            int written = 0;
+            while (written<rcnt) {
+                ssize_t wcnt = write(pfd1[1], buff + written, rcnt - written);
+                // TODO: error handling
+                written += wcnt;
+            }
         }
-        int written = 0;
-        while (written<bytes_read) {
-            ssize_t wcnt = write(pfd1[1], buff + written, rcnt - written);
-            // TODO: error handling
-            written +=wcnt;
-        }
-
+        close(pfd1[1]);
         close(fd);
         printf("parent1\n");
         wait(&status);
