@@ -8,9 +8,10 @@
 
 int children = 0;
 
-void signal_handler(int signum){
+void signal_handler(int signum) {
     printf("There are %d workers currently\n", children);
 }
+
 void do_nothing(int signum){}
 
 int main(int argc, char *argv[]){
@@ -23,28 +24,28 @@ int main(int argc, char *argv[]){
     int count = 0;
     int pfd[2];
 
-
     if (argc != 4) {
         printf("Usage: %s <input_file> <char> <num of workers>\n", argv[0]);
         return EXIT_FAILURE;
     }
-    children = atoi(argv[3]);
-    // DONE: check for length using strlen, it should always be 1
-    if (strlen(argv[2]) != 1) {
+
+    if(strlen(argv[2])!=1){
         printf("Please insert a single character to search for\n");
         return EXIT_FAILURE;
     }
+
+    children = atoi(argv[3]);
     char needle = argv[2][0];
 
     ssize_t fd = open(argv[1], O_RDONLY);
     if (fd < 0) {
         perror("open");
         return EXIT_FAILURE;
-    } 
+    }
 
     if (pipe(pfd) < 0) {
         perror("pipe");
-        exit(1);
+        return EXIT_FAILURE;
     }
 
     for (int i = 0; i < children; i++) {
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]){
             sa.sa_handler = do_nothing;
             if (sigaction(SIGINT, &sa, NULL) < 0) {
                 perror("sigaction");
-                exit(1);
+                return EXIT_FAILURE;
             }
             while (1) {
                 ssize_t p = read(fd, buf, sizeof(buf));
@@ -66,9 +67,13 @@ int main(int argc, char *argv[]){
                 }
                 if (p == 0) {
                     close(pfd[0]);
-                    ssize_t pwr = write(pfd[1], &count, sizeof(count));
-                    if (pwr != sizeof(count)) {
-                        perror("write to pipe");
+                    int written = 0;
+                    while (written < sizeof(count)) {
+                        ssize_t pwr = write(pfd[1], &count, sizeof(count));
+                        if (pwr < 0) {
+                            perror("write to pipe");
+                            return EXIT_FAILURE;
+                        }
                     }
 
                     close(pfd[1]);
@@ -92,7 +97,7 @@ int main(int argc, char *argv[]){
     sa.sa_handler = signal_handler;
     if (sigaction(SIGINT, &sa, NULL) < 0) {
         perror("sigaction");
-        exit(1);
+        return EXIT_FAILURE;
     }
     for (int i = 0; i < children; i++) {
         wait(&status);
