@@ -128,6 +128,7 @@ int main(int argc, char* argv[]){
             perror("write");
             return EXIT_FAILURE;
         }
+        return EXIT_FAILURE;
     }
 }
 
