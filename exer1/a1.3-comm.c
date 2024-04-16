@@ -12,8 +12,6 @@ void signal_handler(int signum) {
     printf("There are %d workers currently\n", children);
 }
 
-void do_nothing(int signum){}
-
 int main(int argc, char *argv[]){
     char buf[10];
     int status;
@@ -54,7 +52,7 @@ int main(int argc, char *argv[]){
             perror("fork");
             return EXIT_FAILURE;
         } else if (pid == 0) {
-            sa.sa_handler = do_nothing;
+            sa.sa_handler = SIG_IGN;
             if (sigaction(SIGINT, &sa, NULL) < 0) {
                 perror("sigaction");
                 return EXIT_FAILURE;
@@ -76,6 +74,7 @@ int main(int argc, char *argv[]){
                             perror("write to pipe");
                             return EXIT_FAILURE;
                         }
+                        written += pwr;
                     }
 
                     close(pfd[1]);
@@ -100,8 +99,10 @@ int main(int argc, char *argv[]){
         perror("sigaction");
         return EXIT_FAILURE;
     }
-    for (int i = 0; i < children; i++) {
+    int total_children = children;
+    for (int i = 0; i < total_children; i++) {
         wait(&status);
+        children--;
     }
     //read from pipe and add it to the total
     close(pfd[1]);
@@ -111,7 +112,6 @@ int main(int argc, char *argv[]){
             break;
         }
         total = total + value;
-        children--;
     }
     close(pfd[0]);
 
