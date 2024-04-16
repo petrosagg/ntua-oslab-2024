@@ -67,6 +67,8 @@ int main(int argc, char *argv[]){
                 }
                 if (p == 0) {
                     close(pfd[0]);
+                    // The first child will sleep 1 second, the second one 2, etc.
+                    sleep(i + 1);
                     int written = 0;
                     while (written < sizeof(count)) {
                         ssize_t pwr = write(pfd[1], &count, sizeof(count));
@@ -85,7 +87,6 @@ int main(int argc, char *argv[]){
                         count++;
                     }
                 }
-                sleep(1);
             }
         }
     }
@@ -111,7 +112,6 @@ int main(int argc, char *argv[]){
         }
         total = total + value;
         children--;
-        sleep(1);
     }
     close(pfd[0]);
 
