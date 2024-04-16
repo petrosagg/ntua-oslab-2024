@@ -19,7 +19,6 @@ int main (int argc, char* argv[]){
         fprintf(stderr, "Invalid needle. Expected one character: %s\n", argv[2]);
         exit(EXIT_FAILURE);
     }
-    char needle = argv[2][0]; 
 
     int handles[2];
     char *child_argv[] = {"a1.4-dispatcher", argv[1], argv[2], NULL};
@@ -55,7 +54,7 @@ int main (int argc, char* argv[]){
             // Try to parse the number of workers which must be a positive integer
             long num_workers = strtol(token, NULL, 10);
             if (errno != 0) {
-                printf("error: %s is not a valid number\n");
+                printf("error: %s is not a valid number\n", token);
                 continue;
             }
             if (num_workers <= 0) {
@@ -89,7 +88,7 @@ int main (int argc, char* argv[]){
                 printf("  dispatcher_pid = %d, num_workers = %ld\n", dispatcher_pid, num_workers);
                 for (size_t i = 0; i < num_workers; i++) {
                     read_exact(dispatcher_rx, &rsp, sizeof(struct rsp));
-                    printf("    worker %d pid = %d\n", i + 1, rsp.info.pid);
+                    printf("    worker %ld pid = %d\n", i + 1, rsp.info.pid);
                 }
             // Handle "show progress" command
             } else if (strcmp(token, "progress") == 0) {

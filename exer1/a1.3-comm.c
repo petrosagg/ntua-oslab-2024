@@ -17,9 +17,8 @@ int main(int argc, char *argv[]){
     char buf[10];
     int status;
     struct sigaction sa;
-    sigset_t sigset;
     sa.sa_flags = SA_RESTART;
-    sa.sa_mask = sigset;
+    sigemptyset(&sa.sa_mask);
 
     int count = 0;
     int pfd[2];
