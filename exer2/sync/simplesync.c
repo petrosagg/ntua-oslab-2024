@@ -36,6 +36,8 @@
 # define USE_ATOMIC_OPS 0
 #endif
 
+static pthread_mutex_t lock;
+
 void *increase_fn(void *arg)
 {
 	int i;
@@ -46,13 +48,13 @@ void *increase_fn(void *arg)
 		if (USE_ATOMIC_OPS) {
 			/* ... */
 			/* You can modify the following line */
-			++(*ip);
+			__sync_add_and_fetch(ip, 1);
 			/* ... */
 		} else {
-			/* ... */
+			pthread_mutex_lock(&lock);
 			/* You cannot modify the following line */
 			++(*ip);
-			/* ... */
+			pthread_mutex_unlock(&lock);
 		}
 	}
 	fprintf(stderr, "Done increasing variable.\n");
@@ -70,13 +72,13 @@ void *decrease_fn(void *arg)
 		if (USE_ATOMIC_OPS) {
 			/* ... */
 			/* You can modify the following line */
-			--(*ip);
+			__sync_sub_and_fetch(ip, 1);
 			/* ... */
 		} else {
-			/* ... */
+			pthread_mutex_lock(&lock);
 			/* You cannot modify the following line */
 			--(*ip);
-			/* ... */
+			pthread_mutex_unlock(&lock);
 		}
 	}
 	fprintf(stderr, "Done decreasing variable.\n");
@@ -94,6 +96,7 @@ int main(int argc, char *argv[])
 	 * Initial value
 	 */
 	val = 0;
+	pthread_mutex_init(&lock, NULL);
 
 	/*
 	 * Create threads
