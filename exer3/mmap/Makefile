@@ -4,7 +4,7 @@ all: mmap
 
 CC = gcc
 CFLAGS = -g -Wall -Wextra -O2
-SHELL= /bin/bash
+SHELL= /usr/bin/env bash
 
 mmap: mmap.o help.o
 	$(CC) $(CFLAGS) $^ -o $@

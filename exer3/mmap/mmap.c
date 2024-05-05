@@ -46,9 +46,9 @@ void child(void)
 	 */
 	if (0 != raise(SIGSTOP))
 		die("raise(SIGSTOP)");
-	/*
-	 * TODO: Write your code here to complete child's part of Step 7.
-	 */
+
+	printf("Child's map\n");
+	show_maps();
 
 
 	/*
@@ -56,9 +56,9 @@ void child(void)
 	 */
 	if (0 != raise(SIGSTOP))
 		die("raise(SIGSTOP)");
-	/*
-	 * TODO: Write your code here to complete child's part of Step 8.
-	 */
+
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Child: Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 
 	/*
@@ -66,9 +66,10 @@ void child(void)
 	 */
 	if (0 != raise(SIGSTOP))
 		die("raise(SIGSTOP)");
-	/*
-	 * TODO: Write your code here to complete child's part of Step 9.
-	 */
+
+	heap_private_buf[0] = 42;
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Child: Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 
 	/*
@@ -76,27 +77,28 @@ void child(void)
 	 */
 	if (0 != raise(SIGSTOP))
 		die("raise(SIGSTOP)");
-	/*
-	 * TODO: Write your code here to complete child's part of Step 10.
-	 */
 
+	heap_shared_buf[0] = 42;
+	pa = get_physical_address((uint64_t) heap_shared_buf);
+	printf("Child: Physical address of heap_shared_buf is VA[0x%lx]\n", pa);
 
 	/*
 	 * Step 11 - Child
 	 */
 	if (0 != raise(SIGSTOP))
 		die("raise(SIGSTOP)");
-	/*
-	 * TODO: Write your code here to complete child's part of Step 11.
-	 */
+
+	mprotect(heap_shared_buf, get_page_size(), PROT_READ);
+	printf("Child's map\n");
+	show_maps();
 
 
 	/*
 	 * Step 12 - Child
 	 */
-	/*
-	 * TODO: Write your code here to complete child's part of Step 12.
-	 */
+	munmap(heap_private_buf, get_page_size());
+	munmap(heap_shared_buf, get_page_size());
+	munmap(file_shared_buf, get_page_size());
 }
 
 /*
@@ -118,9 +120,8 @@ void parent(pid_t child_pid)
 	printf(RED "\nStep 7: Print parent's and child's map.\n" RESET);
 	press_enter();
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 7.
-	 */
+	printf("Parent's map\n");
+	show_maps();
 
 	if (-1 == kill(child_pid, SIGCONT))
 		die("kill");
@@ -136,9 +137,8 @@ void parent(pid_t child_pid)
 		"buffer (main) for both the parent and the child.\n" RESET);
 	press_enter();
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 8.
-	 */
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Parent: Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 	if (-1 == kill(child_pid, SIGCONT))
 		die("kill");
@@ -154,9 +154,8 @@ void parent(pid_t child_pid)
 		"repeat step 8. What happened?\n" RESET);
 	press_enter();
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 9.
-	 */
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Parent: Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 	if (-1 == kill(child_pid, SIGCONT))
 		die("kill");
@@ -173,9 +172,8 @@ void parent(pid_t child_pid)
 		"the child. What happened?\n" RESET);
 	press_enter();
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 10.
-	 */
+	pa = get_physical_address((uint64_t) heap_shared_buf);
+	printf("Parent: Physical address of heap_shared_buf is VA[0x%lx]\n", pa);
 
 	if (-1 == kill(child_pid, SIGCONT))
 		die("kill");
@@ -193,9 +191,8 @@ void parent(pid_t child_pid)
 		"child.\n" RESET);
 	press_enter();
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 11.
-	 */
+	printf("Parent's map\n");
+	show_maps();
 
 	if (-1 == kill(child_pid, SIGCONT))
 		die("kill");
@@ -208,9 +205,9 @@ void parent(pid_t child_pid)
 	 * Step 12 - Parent
 	 */
 
-	/*
-	 * TODO: Write your code here to complete parent's part of Step 12.
-	 */
+	munmap(heap_private_buf, get_page_size());
+	munmap(heap_shared_buf, get_page_size());
+	munmap(file_shared_buf, get_page_size());
 }
 
 int main(void)
@@ -228,10 +225,8 @@ int main(void)
 	printf(RED "\nStep 1: Print the virtual address space map of this "
 		"process [%d].\n" RESET, mypid);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 1.
-	 */
 
+	show_maps();
 
 	/*
 	 * Step 2: Use mmap to allocate a buffer of 1 page and print the map
@@ -240,10 +235,10 @@ int main(void)
 	printf(RED "\nStep 2: Use mmap(2) to allocate a private buffer of "
 		"size equal to 1 page and print the VM map again.\n" RESET);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 2.
-	 */
 
+	heap_private_buf = mmap(NULL, get_page_size(), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	printf("Allocated private buffer at VA[0x%lx]\n", (uint64_t) heap_private_buf);
+	show_maps();
 
 	/*
 	 * Step 3: Find the physical address of the first page of your buffer
@@ -252,10 +247,9 @@ int main(void)
 	printf(RED "\nStep 3: Find and print the physical address of the "
 		"buffer in main memory. What do you see?\n" RESET);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 3.
-	 */
 
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 	/*
 	 * Step 4: Write zeros to the buffer and repeat Step 3.
@@ -263,10 +257,13 @@ int main(void)
 	printf(RED "\nStep 4: Initialize your buffer with zeros and repeat "
 		"Step 3. What happened?\n" RESET);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 4.
-	 */
 
+
+	for (long i = 0; i < get_page_size(); i++) {
+		heap_private_buf[i] = 0;
+	}
+	pa = get_physical_address((uint64_t) heap_private_buf);
+	printf("Physical address of heap_private_buf is VA[0x%lx]\n", pa);
 
 	/*
 	 * Step 5: Use mmap(2) to map file.txt (memory-mapped files) and print
@@ -275,9 +272,28 @@ int main(void)
 	printf(RED "\nStep 5: Use mmap(2) to read and print file.txt. Print "
 		"the new mapping information that has been created.\n" RESET);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 5.
-	 */
+
+	fd = open("./file.txt", O_RDONLY);
+	if (fd < 0) {
+		perror("open");
+		exit(1);
+	}
+	struct stat sb;
+	if (fstat(fd, &sb) == -1) {
+		perror("fstat");
+		exit(EXIT_FAILURE);
+	}
+	file_shared_buf = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	int written = 0;
+	while (written < sb.st_size) {
+		int wcnt = write(1, file_shared_buf + written, sb.st_size - written);
+		if (wcnt < 0) {
+			perror("write");
+			exit(EXIT_FAILURE);
+		}
+		written += wcnt;
+	}
+	show_maps();
 
 
 	/*
@@ -288,10 +304,14 @@ int main(void)
 		"equal to 1 page. Initialize the buffer and print the new "
 		"mapping information that has been created.\n" RESET);
 	press_enter();
-	/*
-	 * TODO: Write your code here to complete Step 6.
-	 */
 
+	heap_shared_buf = mmap(NULL, get_page_size(), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	for (long i = 0; i < get_page_size(); i++) {
+		heap_shared_buf[i] = 0;
+	}
+	pa = get_physical_address((uint64_t) heap_shared_buf);
+	printf("Physical address of heap_shared_buf is VA[0x%lx]\n", pa);
+	show_maps();
 
 	p = fork();
 	if (p < 0)
