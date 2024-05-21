@@ -264,10 +264,13 @@ int main(int argc, char* argv[])
 		wait(NULL);
 	}
 
-	if (!USE_SEMAPHORES) {
+	if (USE_SEMAPHORES) {
+		destroy_shared_memory_area(semaphores, nprocs * sizeof(*semaphores));
+	} else {
 		for (int line = 0; line < y_chars; line += 1) {
 			output_mandel_line(1, &color_buf[line * x_chars]);
 		}
+		destroy_shared_memory_area(color_buf, x_chars * y_chars * sizeof(int));
 	}
 
 	reset_xterm_color(1);
