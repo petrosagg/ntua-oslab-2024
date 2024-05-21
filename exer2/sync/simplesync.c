@@ -68,6 +68,7 @@ void *decrease_fn(void *arg)
 	volatile int *ip = arg;
 
 	fprintf(stderr, "About to decrease variable %d times\n", N);
+	usleep(100000); // Sleep for 100ms
 	for (i = 0; i < N; i++) {
 		if (USE_ATOMIC_OPS) {
 			/* ... */
